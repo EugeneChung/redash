@@ -123,15 +123,12 @@ def json_dumps(data, *args, **kwargs):
     """A custom JSON dump function which uses orjson for better performance."""
 
     # Map common json.dumps kwargs to orjson options
-    options = orjson.OPT_SERIALIZE_NUMPY
+    options = orjson.OPT_SERIALIZE_NUMPY | orjson.OPT_NON_STR_KEYS | orjson.OPT_UTC_Z
     if kwargs.get("indent") == 2:
         options |= orjson.OPT_INDENT_2
 
     if kwargs.get("sort_keys"):
         options |= orjson.OPT_SORT_KEYS
-
-    if not kwargs.get("ensure_ascii", True):  # json default is True
-        options |= orjson.OPT_NON_STR_KEYS | orjson.OPT_UTC_Z
 
     # orjson always uses compact separators (no equivalent to json.dumps(separators=...))
     # orjson doesn't support skipkeys – invalid keys raise TypeError
