@@ -93,6 +93,15 @@ class TestJsonDumps(TestCase):
     def test_handles_binary(self):
         self.assertEqual(json_dumps(memoryview(b"test")), '"74657374"')
 
+    def test_handles_sort_keys_true(self):
+        self.assertEqual(json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=True), '{"a":2,"b":1,"c":3}')
+
+    def test_handles_sort_keys_false(self):
+        result = json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=False)
+        assert '"a":2' in result
+        assert '"b":1' in result
+        assert '"c":3' in result
+
 
 class TestGenerateToken(TestCase):
     def test_format(self):
