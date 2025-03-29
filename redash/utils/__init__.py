@@ -6,16 +6,14 @@ import decimal
 import hashlib
 import io
 import json
-import math
 import os
 import random
 import re
-import sys
 import uuid
 
+import orjson
 import pystache
 import pytz
-import sqlparse
 from flask import current_app
 from funcy import select_values
 from sqlalchemy.orm.query import Query
@@ -111,7 +109,7 @@ class JSONEncoder(json.JSONEncoder):
         elif isinstance(o, bytes):
             result = binascii.hexlify(o).decode()
         else:
-            result = super().default(o)
+            result = o  # Pass other objects to orjson.dumps
         return result
 
 
@@ -121,26 +119,18 @@ def json_loads(data, *args, **kwargs):
     return json.loads(data, *args, **kwargs)
 
 
-# Convert NaN, Inf, and -Inf to None, as they are not valid JSON values.
-def _sanitize_data(data):
-    if isinstance(data, dict):
-        return {k: _sanitize_data(v) for k, v in data.items()}
-    if isinstance(data, list):
-        return [_sanitize_data(v) for v in data]
-    if isinstance(data, float) and (math.isnan(data) or math.isinf(data)):
-        return None
-    return data
-
-
 def json_dumps(data, *args, **kwargs):
-    """A custom JSON dumping function which passes all parameters to the
-    json.dumps function."""
-    kwargs.setdefault("cls", JSONEncoder)
-    kwargs.setdefault("ensure_ascii", False)
-    # Float value nan or inf in Python should be render to None or null in json.
-    # Using allow_nan = True will make Python render nan as NaN, leading to parse error in front-end
-    kwargs.setdefault("allow_nan", False)
-    return json.dumps(_sanitize_data(data), *args, **kwargs)
+    """A custom JSON dumping function which uses orjson for better performance."""
+    # Preprocess the data to handle types AS-IS
+    processed_data = JSONEncoder().default(data)
+
+    result = orjson.dumps(
+        processed_data,
+        option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY | orjson.OPT_NON_STR_KEYS
+    )
+
+    # orjson.dumps returns bytes, but we need a string for compatibility
+    return result.decode('utf-8')
 
 
 def mustache_render(template, context=None, **kwargs):
