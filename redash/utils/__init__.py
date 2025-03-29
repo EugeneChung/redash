@@ -109,7 +109,7 @@ class JSONEncoder(json.JSONEncoder):
         elif isinstance(o, bytes):
             result = binascii.hexlify(o).decode()
         else:
-            result = o  # Pass other objects to orjson.dumps
+            result = o  # Pass object as it is to orjson.dumps
         return result
 
 
