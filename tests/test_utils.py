@@ -96,14 +96,8 @@ class TestJsonDumps(TestCase):
     def test_handles_binary(self):
         self.assertEqual(json_dumps(memoryview(b"test")), '"74657374"')
 
-    def test_handles_sort_keys_true(self):
-        self.assertEqual(json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=True), '{"a":2,"b":1,"c":3}')
-
-    def test_handles_sort_keys_false(self):
-        result = json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=False)
-        assert '"a":2' in result
-        assert '"b":1' in result
-        assert '"c":3' in result
+    def test_handles_bytes(self):
+        assert json_dumps({"data": b"hello"}) == '{"data":"68656c6c6f"}'
 
     def test_handles_decimal(self):
         assert json_dumps({"price": decimal.Decimal("19.99")}) == '{"price":19.99}'
@@ -135,8 +129,14 @@ class TestJsonDumps(TestCase):
         with pytest.raises(ValueError, match="timezone-aware times"):
             json_dumps({"time": t})
 
-    def test_handles_bytes(self):
-        assert json_dumps({"data": b"hello"}) == '{"data":"68656c6c6f"}'
+    def test_handles_sort_keys_true(self):
+        self.assertEqual(json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=True), '{"a":2,"b":1,"c":3}')
+
+    def test_handles_sort_keys_false(self):
+        result = json_dumps({"b": 1, "a": 2, "c": 3}, sort_keys=False)
+        assert '"a":2' in result
+        assert '"b":1' in result
+        assert '"c":3' in result
 
 
 class TestGenerateToken(TestCase):

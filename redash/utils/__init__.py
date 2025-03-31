@@ -121,15 +121,13 @@ def json_loads(data, *args, **kwargs):
 
 def _preprocess_json_data(data, encoder):
     """Recursively preprocess data for JSON serialization using JSONEncoder."""
-    if isinstance(data, dict):
+    if isinstance(data, (str, int, float, bool, type(None))):
+        return data
+    elif isinstance(data, dict):
         return {_preprocess_json_data(k, encoder): _preprocess_json_data(v, encoder) for k, v in data.items()}
     elif isinstance(data, (list, tuple)):
         return [_preprocess_json_data(item, encoder) for item in data]
-    elif isinstance(data, (str, int, float, bool, type(None))):
-        # Pass primitive JSON types as is
-        return data
     else:
-        # Use JSONEncoder to handle complex types
         return encoder.default(data)
 
 
