@@ -119,6 +119,29 @@ def json_loads(data, *args, **kwargs):
     return json.loads(data, *args, **kwargs)
 
 
+def _preprocess_json_data(data, encoder):
+    """Recursively preprocess data for JSON serialization using JSONEncoder."""
+    if isinstance(data, dict):
+        return {_preprocess_json_data(k, encoder): _preprocess_json_data(v, encoder) for k, v in data.items()}
+    elif isinstance(data, (list, tuple)):
+        return [_preprocess_json_data(item, encoder) for item in data]
+    elif isinstance(data, (str, int, float, bool, type(None))):
+        # Pass primitive JSON types as is
+        return data
+    else:
+        # Use JSONEncoder to handle complex types
+        try:
+            result = encoder.default(data)
+            # If the result is the same as the input, it's a primitive type
+            if result is data:
+                return data
+            # Otherwise, recursively process the converted object
+            return _preprocess_json_data(result, encoder)
+        except TypeError:
+            # If encoder.default raises TypeError, return original data
+            return data
+
+
 def json_dumps(data, *args, **kwargs):
     """A custom JSON dump function which uses orjson for better performance."""
 
@@ -134,7 +157,9 @@ def json_dumps(data, *args, **kwargs):
     # orjson doesn't support skipkeys – invalid keys raise TypeError
 
     try:
-        return orjson.dumps(data, default=JSONEncoder().default, option=options).decode('utf-8')
+        # Preprocess data before sending to orjson.dumps
+        preprocessed_data = _preprocess_json_data(data, JSONEncoder())
+        return orjson.dumps(preprocessed_data, option=options).decode('utf-8')
     except orjson.JSONEncodeError as e:
         raise TypeError(f"Object not serializable: {e}")
 

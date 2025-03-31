@@ -1,5 +1,8 @@
 from collections import namedtuple
+import datetime
+import decimal
 from unittest import TestCase
+import uuid
 
 import pytest
 
