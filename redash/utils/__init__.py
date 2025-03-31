@@ -130,16 +130,7 @@ def _preprocess_json_data(data, encoder):
         return data
     else:
         # Use JSONEncoder to handle complex types
-        try:
-            result = encoder.default(data)
-            # If the result is the same as the input, it's a primitive type
-            if result is data:
-                return data
-            # Otherwise, recursively process the converted object
-            return _preprocess_json_data(result, encoder)
-        except TypeError:
-            # If encoder.default raises TypeError, return original data
-            return data
+        return encoder.default(data)
 
 
 def json_dumps(data, *args, **kwargs):
